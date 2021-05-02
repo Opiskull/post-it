@@ -11,6 +11,9 @@ export interface PostProps {
     backgroundColor?: string;
     editableNode?: ReactNode;
     type: string;
+    onDelete: () => void;
+    editable?: boolean;
+    creator: string;
 }
 
 export const Post = (props: PostProps) => {
@@ -18,7 +21,7 @@ export const Post = (props: PostProps) => {
 
     const { height, width, x, y } = state;
 
-    const [editable, setEditable] = useState(false);
+    const [editable, setEditable] = useState(props.editable || false);
 
     const self = useRef<Rnd>(null);
     const stopEdit = (e: MouseEvent) => {
@@ -53,11 +56,14 @@ export const Post = (props: PostProps) => {
                     })
                 );
             }}
-            minHeight={50}
-            minWidth={100}
+            minHeight={100}
+            minWidth={150}
             style={{
-                border: '1px black solid',
-                backgroundColor: state.backgroundColor || 'white'
+                backgroundColor: state.backgroundColor || 'white',
+                boxShadow:
+                    'rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px',
+                display: 'flex',
+                flexDirection: 'column'
             }}
             onResize={(e, direction, ref, delta, pos) => {
                 setState(
@@ -70,13 +76,33 @@ export const Post = (props: PostProps) => {
                 );
             }}
             disableDragging={editable}
-            onDoubleClick={() => {
+            onDoubleClick={(e: MouseEvent) => {
                 setEditable(true);
+                e.stopPropagation();
             }}
         >
-            {props.editableNode && editable
-                ? props.editableNode
-                : props.children}
+            <div
+                className="action"
+                style={{
+                    flexDirection: 'row',
+                    display: 'flex',
+                    justifyContent: 'space-between'
+                }}
+            >
+                <span>{props.creator}</span>
+                <button
+                    onClick={() => {
+                        props.onDelete();
+                    }}
+                >
+                    delete
+                </button>
+            </div>
+            <div className="content" style={{ overflow: 'auto', flex: '1' }}>
+                {props.editableNode && editable
+                    ? props.editableNode
+                    : props.children}
+            </div>
         </Rnd>
     );
 };
