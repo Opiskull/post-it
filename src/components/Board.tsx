@@ -1,82 +1,19 @@
-import produce from 'immer';
-import React, { useState } from 'react';
-import { PostData } from './post-data';
+import useWebSocket from 'react-use-websocket';
+import { useAppSelector } from '../hooks';
+import { addPost, deletePost, selectPosts } from '../slices/postsSlice';
 import { TextPost } from './TextPost';
 
 export const Board = () => {
-    const [posts, setPosts] = useState<PostData[]>([
+    const posts = useAppSelector(selectPosts);
+    const { sendJsonMessage } = useWebSocket(
+        'wss://cf-post-it.opi.workers.dev/testing1/ws',
         {
-            x: 0,
-            y: 0,
-            height: 10,
-            width: 50,
-            text: 'test',
-            id: 1,
-            type: 'text',
-            creator: 'carl'
-        },
-        {
-            x: 34,
-            y: 0,
-            height: 23,
-            width: 666,
-            text: 'tedsdst',
-            id: 2,
-            type: 'text',
-            creator: 'carl'
-        },
-        {
-            x: 0,
-            y: 100,
-            height: 343,
-            width: 233,
-            text: 'tesdst',
-            id: 3,
-            type: 'text',
-            creator: 'carl'
-        },
-        {
-            x: 23,
-            y: 400,
-            height: 34,
-            width: 545,
-            text: 'tdsest',
-            id: 4,
-            type: 'text',
-            creator: 'carl'
+            share: true
         }
-    ]);
-
-    const [postId, setPostId] = useState(5);
-
-    const deletePost = (postId: Number) => {
-        setPosts(
-            produce(posts, (draft) => {
-                const postIndex = draft.findIndex((p) => p.id === postId);
-                if (postIndex !== -1) {
-                    draft.splice(postIndex, 1);
-                }
-            })
-        );
-    };
-
-    const addPost = (post: any) => {
-        setPosts(
-            produce(posts, (draft) => {
-                setPostId(postId + 1);
-                draft.push({
-                    x: 44,
-                    y: 44,
-                    height: 50,
-                    width: 100,
-                    text: '',
-                    type: 'text',
-                    ...post,
-                    id: postId,
-                    editable: true
-                });
-            })
-        );
+    );
+    const dispatch = (data: any) => {
+        sendJsonMessage(data);
+        // appDispatch(data);
     };
 
     return (
@@ -90,23 +27,39 @@ export const Board = () => {
                 bottom: 0
             }}
             onDoubleClick={(e) => {
-                addPost({ x: e.pageX, y: e.pageY });
+                dispatch(
+                    addPost({
+                        x: e.pageX,
+                        y: e.pageY,
+                        text: '',
+                        width: 150,
+                        height: 100
+                    } as any)
+                );
                 e.stopPropagation();
             }}
         >
             <div className="posts">
                 {posts.map((_) => (
                     <TextPost
-                        {..._}
+                        id={_.id}
                         key={_.id}
-                        onDelete={() => deletePost(_.id)}
+                        onDelete={() => dispatch(deletePost(_.id))}
                     ></TextPost>
                 ))}
             </div>
             <div className="actions">
                 <button
                     onClick={(e) => {
-                        addPost({ x: 500, y: 500 });
+                        dispatch(
+                            addPost({
+                                x: 500,
+                                y: 500,
+                                text: '',
+                                width: 150,
+                                height: 100
+                            } as any)
+                        );
                     }}
                 >
                     add

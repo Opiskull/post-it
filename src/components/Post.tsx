@@ -1,25 +1,30 @@
-import produce from 'immer';
 import { ReactNode, useEffect, useRef, useState } from 'react';
 import { Rnd } from 'react-rnd';
+import useWebSocket from 'react-use-websocket';
+import { useAppDispatch, useAppSelector, usePublished } from '../hooks';
+import { selectPosts, updatePost } from '../slices/postsSlice';
 
 export interface PostProps {
-    width: number;
-    height: number;
-    x: number;
-    y: number;
     children?: ReactNode;
-    backgroundColor?: string;
     editableNode?: ReactNode;
-    type: string;
     onDelete: () => void;
     editable?: boolean;
-    creator: string;
+    id: string;
 }
 
 export const Post = (props: PostProps) => {
-    const [state, setState] = useState<PostProps>(props);
+    const posts = useAppSelector(selectPosts);
+    const dispatch = useAppDispatch();
+    const post = posts.find((_) => _.id === props.id) as any;
 
-    const { height, width, x, y } = state;
+    const { sendJsonMessage } = useWebSocket(
+        'wss://cf-post-it.opi.workers.dev/testing1/ws',
+        {
+            share: true
+        }
+    );
+
+    const { height, width, x, y } = post;
 
     const [editable, setEditable] = useState(props.editable || false);
 
@@ -35,6 +40,8 @@ export const Post = (props: PostProps) => {
         setEditable(false);
     };
 
+    const publishUpdate = usePublished();
+
     useEffect(() => {
         document.addEventListener('click', stopEdit);
         return () => {
@@ -49,31 +56,37 @@ export const Post = (props: PostProps) => {
             size={{ height, width }}
             position={{ x, y }}
             onDragStop={(e, d) => {
-                setState(
-                    produce(state, (_) => {
-                        _.x = d.x;
-                        _.y = d.y;
-                    })
-                );
+                dispatch(updatePost({ ...post, x: d.x, y: d.y }));
+                publishUpdate(updatePost({ ...post, x: d.x, y: d.y }))();
             }}
             minHeight={100}
             minWidth={150}
             style={{
-                backgroundColor: state.backgroundColor || 'white',
+                backgroundColor: post.backgroundColor || 'white',
                 boxShadow:
                     'rgba(60, 64, 67, 0.3) 0px 1px 2px 0px, rgba(60, 64, 67, 0.15) 0px 2px 6px 2px',
                 display: 'flex',
                 flexDirection: 'column'
             }}
             onResize={(e, direction, ref, delta, pos) => {
-                setState(
-                    produce(state, (_) => {
-                        _.x = pos.x;
-                        _.y = pos.y;
-                        _.width = ref.offsetWidth;
-                        _.height = ref.offsetHeight;
+                dispatch(
+                    updatePost({
+                        ...post,
+                        x: pos.x,
+                        y: pos.y,
+                        width: ref.offsetWidth,
+                        height: ref.offsetHeight
                     })
                 );
+                publishUpdate(
+                    updatePost({
+                        ...post,
+                        x: pos.x,
+                        y: pos.y,
+                        width: ref.offsetWidth,
+                        height: ref.offsetHeight
+                    })
+                )();
             }}
             disableDragging={editable}
             onDoubleClick={(e: MouseEvent) => {
@@ -89,7 +102,7 @@ export const Post = (props: PostProps) => {
                     justifyContent: 'space-between'
                 }}
             >
-                <span>{props.creator}</span>
+                <span>{post?.creator}</span>
                 <button
                     onClick={() => {
                         props.onDelete();
