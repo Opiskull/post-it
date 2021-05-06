@@ -1,11 +1,9 @@
-import useWebSocket from 'react-use-websocket';
-import { useAppDispatch } from './hooks';
+import { useAppDispatch, useAppWebSocket } from './hooks';
 import {
     addPost,
     addPosts,
     deletePost,
     Post,
-    postsSlice,
     updatePost
 } from './slices/postsSlice';
 
@@ -22,8 +20,6 @@ const handleMessages = (dispatch: any) => {
         });
         handlers.set('post/addPost', (post: Post) => dispatch(addPost(post)));
         handlers.set('post/updatePost', (post: Post) => {
-            console.log(post);
-
             dispatch(updatePost(post));
         });
         handlers.set('post/deletePost', (postId: string) =>
@@ -43,7 +39,7 @@ const handleMessages = (dispatch: any) => {
 export const WebSocketHandler = (props: { url: string }) => {
     const dispatch = useAppDispatch();
 
-    const { sendJsonMessage } = useWebSocket(props.url, {
+    useAppWebSocket({
         share: true,
         onMessage: handleMessages(dispatch)
     });
@@ -52,22 +48,6 @@ export const WebSocketHandler = (props: { url: string }) => {
 };
 
 // switch (data.type) {
-//     case 'set':
-//       let post: Post = data.post;
-//       if (!post.id) {
-//         let id: string = `${Date.now()}`;
-//         post.id = id;
-//       }
-//       this.posts.set(`post.${post.id}`, post);
-//       await this.state.storage.put(`post.${post.id}`, post);
-//       this.broadcast({ type: 'set', post });
-//       break;
-//     case 'delete':
-//       const postId = data.post.id;
-//       this.posts.delete(`post.${postId}`);
-//       await this.state.storage.delete(`post.${postId}`);
-//       this.broadcast({ type: 'delete', postId });
-//       break;
 //     case 'config':
 //       const board = {
 //         posts: Array.from(this.posts?.values()),

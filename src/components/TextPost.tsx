@@ -1,7 +1,6 @@
-import produce from 'immer';
-import React, { useState } from 'react';
-import { useAppDispatch, useAppSelector, usePublished } from '../hooks';
-import { updatePost } from '../slices/postsSlice';
+import React from 'react';
+import { useAppSelector, useDispatchAndDebouncedPublish } from '../hooks';
+import { selectPostById, updatePost } from '../slices/postsSlice';
 import { Post, PostProps } from './Post';
 
 export interface TextPostProps extends PostProps {}
@@ -14,22 +13,17 @@ const textToParagraph = (text: string) =>
     ));
 
 export const TextPost = (props: TextPostProps) => {
-    const post = useAppSelector((_) =>
-        _.posts.posts.find((_) => _.id === props.id)
-    ) as any;
-    const dispatch = useAppDispatch();
-    const publishUpdate = usePublished();
+    const post = useAppSelector(selectPostById(props.id));
+    const dispatch = useDispatchAndDebouncedPublish();
     const editable = (
         <textarea
             style={{
-                height: '100%',
-                width: '100%',
+                flex: 1,
                 resize: 'none'
             }}
             value={post.text}
             onChange={(e) => {
                 dispatch(updatePost({ ...post, text: e.target.value }));
-                publishUpdate(updatePost({ ...post, text: e.target.value }))();
             }}
             autoFocus={true}
         ></textarea>

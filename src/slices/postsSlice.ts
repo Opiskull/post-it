@@ -53,7 +53,9 @@ export const { addPost, deletePost, updatePost, addPosts } = postsSlice.actions;
 
 // Other code such as selectors can use the imported `RootState` type
 export const selectPosts = (state: RootState) => state.posts.posts;
-export const selectPostById = (state: RootState, id: string) =>
-    state.posts.posts.find((_) => _.id === id);
+export const selectPostById = (id: string) => {
+    return (state: RootState) =>
+        state.posts.posts.find((_) => _.id === id) as Post;
+};
 
 export default postsSlice.reducer;

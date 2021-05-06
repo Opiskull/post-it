@@ -1,19 +1,21 @@
-import useWebSocket from 'react-use-websocket';
-import { useAppSelector } from '../hooks';
-import { addPost, deletePost, selectPosts } from '../slices/postsSlice';
+import { useAppSelector, usePublisher } from '../hooks';
+import { addPost, deletePost, Post, selectPosts } from '../slices/postsSlice';
 import { TextPost } from './TextPost';
+
+const defaultPost = {
+    y: 400,
+    x: 400,
+    text: '',
+    width: 150,
+    height: 100
+} as Post;
 
 export const Board = () => {
     const posts = useAppSelector(selectPosts);
-    const { sendJsonMessage } = useWebSocket(
-        'wss://cf-post-it.opi.workers.dev/testing1/ws',
-        {
-            share: true
-        }
-    );
-    const dispatch = (data: any) => {
-        sendJsonMessage(data);
-        // appDispatch(data);
+    const publish = usePublisher();
+
+    const createPost = (post: any) => {
+        publish(addPost({ ...defaultPost, ...post }));
     };
 
     return (
@@ -27,15 +29,7 @@ export const Board = () => {
                 bottom: 0
             }}
             onDoubleClick={(e) => {
-                dispatch(
-                    addPost({
-                        x: e.pageX,
-                        y: e.pageY,
-                        text: '',
-                        width: 150,
-                        height: 100
-                    } as any)
-                );
+                createPost({ x: e.pageX, y: e.pageY });
                 e.stopPropagation();
             }}
         >
@@ -44,22 +38,14 @@ export const Board = () => {
                     <TextPost
                         id={_.id}
                         key={_.id}
-                        onDelete={() => dispatch(deletePost(_.id))}
+                        onDelete={() => publish(deletePost(_.id))}
                     ></TextPost>
                 ))}
             </div>
             <div className="actions">
                 <button
                     onClick={(e) => {
-                        dispatch(
-                            addPost({
-                                x: 500,
-                                y: 500,
-                                text: '',
-                                width: 150,
-                                height: 100
-                            } as any)
-                        );
+                        createPost({});
                     }}
                 >
                     add
